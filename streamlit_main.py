@@ -1,48 +1,6 @@
 import streamlit as st
 from modules.translations import LANG_VI, LANG_EN
 import os
-import base64
-
-# --- HÀM THÊM ẢNH NỀN (ĐÃ CẬP NHẬT) ---
-def set_bg_hack(main_bg):
-    '''
-    Hàm để chèn CSS tùy chỉnh cho ảnh nền cố định.
-    main_bg: Chuỗi base64 của ảnh.
-    '''
-    main_bg_ext = "png"
-        
-    st.markdown(
-        f"""
-        <style>
-        .stApp {{
-            background: url(data:image/{main_bg_ext};base64,{main_bg});
-            background-size: cover;
-            background-repeat: no-repeat;
-            background-attachment: fixed; /* <<< DÒNG NÀY SẼ GIỮ ẢNH NỀN CỐ ĐỊNH */
-        }}
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-
-# --- HÀM ĐỂ LẤY CHUỖI BASE64 TỪ FILE ---
-@st.cache_data # Cache lại để không phải đọc file mỗi lần
-def get_base64_of_bin_file(bin_file):
-    with open(bin_file, 'rb') as f:
-        data = f.read()
-    return base64.b64encode(data).decode()
-
-# --- GỌI HÀM SET BACKGROUND Ở ĐẦU SCRIPT ---
-# Thay 'fig/back@2.png' bằng tên file ảnh nền chính xác của bạn
-try:
-    img_path = os.path.join("fig", "back@2.png")
-    img_base64 = get_base64_of_bin_file(img_path)
-    set_bg_hack(img_base64)
-except FileNotFoundError:
-    st.warning("Không tìm thấy file ảnh nền 'fig/back@2.png'. Bỏ qua việc đặt ảnh nền.")
-
-
-# --- PHẦN CODE CÒN LẠI GIỮ NGUYÊN ---
 
 # Cấu hình trang (phải là lệnh đầu tiên sau khi import và định nghĩa hàm)
 st.set_page_config(
