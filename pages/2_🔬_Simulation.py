@@ -172,7 +172,10 @@ with st.sidebar:
     selected_method = st.radio(T['screen2_method_group'], method_options, key='method_selection')
     method_short = "Bashforth" if selected_method == T['screen2_method_ab'] else "Moulton"
     
-    with st.expander(T[f"screen2_details_group_{method_short[:2].lower()}"], expanded=True):
+method_suffix = 'ab' if selected_method == T['screen2_method_ab'] else 'am'
+
+# Sử dụng suffix đó để lấy đúng key dịch
+with st.expander(T[f"screen2_details_group_{method_suffix}"], expanded=True):
         step_options = {2: T['screen2_step2'], 3: T['screen2_step3'], 4: T['screen2_step4'], 5: T['screen2_step5']}
         
         if model_id == "model5" and method_short == "Bashforth":
