@@ -1,6 +1,14 @@
 import numpy as np
 from .translations import LANG_VI, LANG_EN
-
+from .animations import (
+    ABM_ROOM_DIMENSION_DEFAULT,
+    ABM_PTRANS_MIN,
+    ABM_PTRANS_MAX,
+    ABM_MAX_STEPS_DEFAULT,
+    ABM_INTERVAL_DEFAULT,
+    MAX_TOTAL_AGENTS_FOR_FULL_DISPLAY,
+    SAMPLE_SIZE_FOR_LARGE_POPULATION
+)
 # ==============================================
 #           Models Data
 # ==============================================
