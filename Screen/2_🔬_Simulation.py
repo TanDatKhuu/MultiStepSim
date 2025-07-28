@@ -1,4 +1,3 @@
-# Screen/2_🔬_Simulation.py
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
