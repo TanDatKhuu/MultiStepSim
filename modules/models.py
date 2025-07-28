@@ -22,7 +22,7 @@ MODELS_DATA = {
         "param_keys_en": [LANG_EN["model1_param1"], LANG_EN["model1_param2"], LANG_EN["model1_param3"], LANG_EN["model1_param4"]],
         "internal_param_keys": ["O₀", "k", "t₀", "t₁"],
         "ode_func": lambda k: (lambda t, y: k * y),
-        "exact_func": lambda O0, k, t0: (lambda t: O0 * np.exp(k * (np.asarray(t) - t0))),
+        "exact_func": lambda O₀, k, t₀: (lambda t: O₀ * np.exp(k * (np.asarray(t) - t₀))),
     },
     #Model 2: Cell growth
     LANG_VI["model2_name"]: {
@@ -33,7 +33,7 @@ MODELS_DATA = {
         "param_keys_en": [LANG_EN["model2_param1"], LANG_EN["model2_param3"], LANG_EN["model2_param4"]],
         "internal_param_keys": ["x₀", "t₀", "t₁"],
         "ode_func": lambda c: (lambda t, y: c * (y**(2.0/3.0) + 1e-15)),
-        "exact_func": lambda x0, c, t0: (lambda t: (x0**(1.0/3.0) + c * (np.asarray(t) - t0) / 3.0)**3),
+        "exact_func": lambda x₀, c, t₀: (lambda t: (x₀**(1.0/3.0) + c * (np.asarray(t) - t₀) / 3.0)**3),
     },
     #Model 3: Spread of epidemicepidemic
     LANG_VI["model3_name"]: {
@@ -45,11 +45,7 @@ MODELS_DATA = {
         "param_keys_en": [LANG_EN["model3_param2"], LANG_EN["model3_param4"], LANG_EN["model3_param5"]],
         "internal_param_keys": ["n", "t₀", "t₁"], 
         "ode_func": lambda r, n_initial: (lambda t, y: -r * y * (n_initial + 1.0 - y)),
-        "exact_func": lambda n_initial, r, t0: (
-            lambda t: (n_initial * (n_initial + 1.0) * np.exp(-r * (n_initial + 1.0) * (np.asarray(t) - t0))) / \
-                      (1.0 + n_initial * np.exp(-r * (n_initial + 1.0) * (np.asarray(t) - t0))) if n_initial > 0 else
-            (lambda t: np.zeros_like(np.asarray(t))) 
-        ),
+        "exact_func": lambda n_initial, r, t₀: ( lambda t: (n_initial * (n_initial + 1.0) * np.exp(-r * (n_initial + 1.0) * (np.asarray(t) - t₀))) / \(1.0 + n_initial * np.exp(-r * (n_initial + 1.0) * (np.asarray(t) - t₀))) if n_initial > 0 else(lambda t: np.zeros_like(np.asarray(t)))),
         "abm_defaults": {
             "initial_infected": 1,
             "room_dimension": ABM_ROOM_DIMENSION_DEFAULT, 
@@ -99,8 +95,7 @@ MODELS_DATA = {
         "ode_func": lambda alpha, beta, m, G, l: (
             lambda t, u1, u2: np.array([u2, m * l * G - alpha * u2 - beta * u1])
         ),
-        "exact_func": lambda alpha, beta, m, G, l, n, k, t0: (
-            lambda t_arr: _model4_exact_solution(alpha, beta, m, G, l, n, k, t0, t_arr)
+        "exact_func": lambda alpha, beta, m, G, l, Y0, dY0, t₀: (lambda t_arr: _model4_exact_solution(alpha, beta, m, G, l, Y0, dY0, t₀, t_arr)
         ),
     },
     #Model 5: Pursuit curve
