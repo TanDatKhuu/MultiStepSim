@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 from .translations import LANG_VI, LANG_EN
 from .animations import (
