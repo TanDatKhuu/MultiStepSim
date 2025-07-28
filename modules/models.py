@@ -123,56 +123,80 @@ MODELS_DATA = {
     },
 }
 #Solve model 4
-def _model4_exact_solution(alpha, beta, m, G, l, n, k, t0, t_arr):
-    t_rel = np.asarray(t_arr) - t0 
+def _model4_exact_solution(alpha, beta, m, G, l, Y0, dY0, t₀, t_arr):
+    """
+    Calculates the exact solution Y(t) and Y'(t) for Model 4.
+    Y0 = Y(t₀), dY0 = Y'(t₀)
+    Returns a tuple: (Y_exact_values, dY_exact_values)
+    """
+    t_rel = np.asarray(t_arr) - t₀  # Sửa t0 thành t₀
     Y_vals = np.zeros_like(t_rel)
     dY_vals = np.zeros_like(t_rel)
+
+    # Handle beta = 0 case separately to avoid division by zero later
     if abs(beta) < 1e-15:
-        if abs(alpha) < 1e-15: 
-             c = m * l * G
-             Y_vals = n + k * t_rel + 0.5 * c * t_rel**2
-             dY_vals = k + c * t_rel
-             return Y_vals, dY_vals
+        if abs(alpha) < 1e-15:  # Should not happen with alpha > 0 constraint
+            # If alpha is also zero, it's just Y'' = m*l*G
+            c = m * l * G
+            Y_vals = Y0 + dY0 * t_rel + 0.5 * c * t_rel**2 # Sửa n thành Y0, k thành dY0
+            dY_vals = dY0 + c * t_rel                   # Sửa k thành dY0
+            return Y_vals, dY_vals
         else:
-             c = m * l * G
-             B = (c / alpha - k) / alpha
-             A = n - B
-             Y_vals = A + B * np.exp(-alpha * t_rel) + (c / alpha) * t_rel
-             dY_vals = -alpha * B * np.exp(-alpha * t_rel) + (c / alpha)
-             return Y_vals, dY_vals
+            # Y'' + alpha*Y' = m*l*G
+            c = m * l * G
+            # General solution: A + B*exp(-alpha*t) + (c/alpha)*t
+            # Apply ICs: Y(0_rel)=Y0, Y'(0_rel)=dY0
+            B = (c / alpha - dY0) / alpha               # Sửa k thành dY0
+            A = Y0 - B                                  # Sửa n thành Y0
+            Y_vals = A + B * np.exp(-alpha * t_rel) + (c / alpha) * t_rel
+            dY_vals = -alpha * B * np.exp(-alpha * t_rel) + (c / alpha)
+            return Y_vals, dY_vals
+
     # Case beta != 0
     steady_state = (m * l * G) / beta
     delta = alpha**2 - 4 * beta
-    if delta > 1e-15: 
+
+    if delta > 1e-15:  # Overdamped
         r1 = (-alpha + np.sqrt(delta)) / 2.0
         r2 = (-alpha - np.sqrt(delta)) / 2.0
+        # Y(t) = C1*exp(r1*t_rel) + C2*exp(r2*t_rel) + steady_state
+        # Y(0_rel) = Y0 => C1 + C2 = Y0 - steady_state
+        # Y'(0_rel) = dY0 => C1*r1 + C2*r2 = dY0
         if abs(r1 - r2) > 1e-15:
-            C2 = (k - r1 * (n - steady_state)) / (r2 - r1)
-            C1 = (n - steady_state) - C2
+            C2 = (dY0 - r1 * (Y0 - steady_state)) / (r2 - r1) # Sửa k thành dY0, n thành Y0
+            C1 = (Y0 - steady_state) - C2                    # Sửa n thành Y0
         else:
-             C1, C2 = 0, 0 
+            C1, C2 = 0, 0
         Y_vals = C1 * np.exp(r1 * t_rel) + C2 * np.exp(r2 * t_rel) + steady_state
         dY_vals = C1 * r1 * np.exp(r1 * t_rel) + C2 * r2 * np.exp(r2 * t_rel)
-    elif delta < -1e-15: # Underdamped
+
+    elif delta < -1e-15:  # Underdamped
         omega = np.sqrt(-delta) / 2.0
         zeta = -alpha / 2.0
-        C1 = n - steady_state
-        if abs(omega)>1e-15:
-            C2 = (k - zeta * C1) / omega
+        # Y(t) = exp(zeta*t_rel)*(C1*cos(omega*t_rel) + C2*sin(omega*t_rel)) + steady_state
+        # Y(0_rel) = Y0 => C1 = Y0 - steady_state
+        # Y'(0_rel) = dY0 => zeta*C1 + omega*C2 = dY0
+        C1 = Y0 - steady_state                          # Sửa n thành Y0
+        if abs(omega) > 1e-15:
+            C2 = (dY0 - zeta * C1) / omega              # Sửa k thành dY0
         else:
-            C2 = 0 
+            C2 = 0
         exp_term = np.exp(zeta * t_rel)
         cos_term = np.cos(omega * t_rel)
         sin_term = np.sin(omega * t_rel)
         Y_vals = exp_term * (C1 * cos_term + C2 * sin_term) + steady_state
         dY_vals = zeta * exp_term * (C1 * cos_term + C2 * sin_term) + \
                   exp_term * (-C1 * omega * sin_term + C2 * omega * cos_term)
-    else: 
+    else:  # Critically damped
         r = -alpha / 2.0
-        C1 = n - steady_state
-        C2 = k - r * C1
+        # Y(t) = (C1 + C2*t_rel)*exp(r*t_rel) + steady_state
+        # Y(0_rel) = Y0 => C1 = Y0 - steady_state
+        # Y'(0_rel) = dY0 => C2 + r*C1 = dY0
+        C1 = Y0 - steady_state                          # Sửa n thành Y0
+        C2 = dY0 - r * C1                               # Sửa k thành dY0
         Y_vals = (C1 + C2 * t_rel) * np.exp(r * t_rel) + steady_state
         dY_vals = C2 * np.exp(r * t_rel) + (C1 + C2 * t_rel) * r * np.exp(r * t_rel)
+
     return Y_vals, dY_vals
 #Solve model 5
 def _model5_ode_system(t, x, y, u, v):
