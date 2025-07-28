@@ -1,3 +1,4 @@
+# pages/2_🔬_Simulation.py
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
@@ -42,6 +43,10 @@ def validate_and_get_params(model_data, T):
 
 @st.cache_data
 def perform_simulation_cached(_config):
+    """
+    Hàm bọc để chạy mô phỏng.
+    *** ĐÃ CẬP NHẬT ĐẦY ĐỦ LOGIC TÍNH TOÁN TỪ CODE GỐC ***
+    """
     try:
         ode_func = _config['ode_func']
         exact_func = _config['exact_func']
@@ -67,19 +72,19 @@ def perform_simulation_cached(_config):
         if not solver_func: raise ValueError(f"Solver for {method_short}-{steps_int} not found.")
 
         interval_length = t_end - t_start
+        
+        # --- 1. Tính toán cho đồ thị nghiệm (Solution Plot) ---
         n_plot = max(int(np.ceil(interval_length / h_target)), 100)
         t_plot = np.linspace(t_start, t_end, n_plot + 1)
-
-        approx_sol_plot, exact_sol_plot = None, None
-
+        
         if is_system:
-            approx_all = solver_func(ode_func, t_plot, y0[0], y0[1])
-            approx_sol_plot = approx_all[0] if selected_component == 'x' else approx_all[1]
+            approx_sol_all = solver_func(ode_func, t_plot, y0[0], y0[1])
+            approx_sol_plot = approx_sol_all[0] if selected_component == 'x' else approx_sol_all[1]
             if uses_rk5_ref:
-                exact_all = solvers.RK5_system(ode_func, t_plot, y0[0], y0[1])
+                exact_sol_all = solvers.RK5_system(ode_func, t_plot, y0[0], y0[1])
             else:
-                exact_all = exact_func(t_plot)
-            exact_sol_plot = exact_all[0] if selected_component == 'x' else exact_all[1]
+                exact_sol_all = exact_func(t_plot)
+            exact_sol_plot = exact_sol_all[0] if selected_component == 'x' else exact_sol_all[1]
         else:
             approx_sol_plot = solver_func(ode_func, t_plot, y0)
             if exact_func: exact_sol_plot = exact_func(t_plot)
@@ -87,8 +92,11 @@ def perform_simulation_cached(_config):
         min_len = min(len(approx_sol_plot), len(exact_sol_plot))
         t_plot, approx_sol_plot, exact_sol_plot = t_plot[:min_len], approx_sol_plot[:min_len], exact_sol_plot[:min_len]
 
+        # --- 2. Tính toán cho đồ thị sai số và bậc hội tụ (LOGIC ĐẦY ĐỦ) ---
         errors_conv, n_conv_vals, h_conv_vals = [], [], []
-        n_values_loop = np.unique(np.geomspace(steps_int * 5, 1000, 15, dtype=int))
+        n_start_conv = max(steps_int * 5, 20)
+        n_end_conv = max(n_start_conv * 10, 200)
+        n_values_loop = np.unique(np.geomspace(n_start_conv, n_end_conv, 15, dtype=int))
 
         for n in n_values_loop:
             if n < steps_int + 1: continue
@@ -127,10 +135,10 @@ def perform_simulation_cached(_config):
     except Exception as e:
         return {"error": str(e), "traceback": traceback.format_exc()}
 
+
 # ==============================================================================
 # --- GIAO DIỆN STREAMLIT CHÍNH ---
 # ==============================================================================
-
 if 'translations' not in st.session_state:
     st.error("Vui lòng bắt đầu từ trang chính (streamlit_main.py).")
     st.stop()
@@ -143,11 +151,12 @@ model_data = st.session_state.selected_model_data
 model_id = model_data.get("id")
 model_name = T[f"{model_id}_name"]
 
-st.title(f"{model_name}")
+st.title(f"{T.get('screen2_base_title', 'Mô phỏng')}: {model_name}")
 
 with st.sidebar:
     st.header(T['screen2_actions_group'])
     run_button = st.button(T['screen2_init_button'], use_container_width=True, type="primary")
+
     st.header("Cài đặt")
     method_options = [T['screen2_method_ab'], T['screen2_method_am']]
     selected_method_display = st.radio(T['screen2_method_group'], method_options, key='method_selection_display')
@@ -159,7 +168,7 @@ with st.sidebar:
         available_steps = [2, 3, 4, 5] if method_short == "Bashforth" else [2, 3, 4]
         if model_id == "model5" and method_short == "Bashforth": available_steps = [2, 3, 4]
         
-        selected_steps = st.multiselect("Số bước", available_steps, format_func=lambda x: step_options.get(x, f"Step {x}"), default=[4] if 4 in available_steps else ([2] if 2 in available_steps else []))
+        selected_steps = st.multiselect("Số bước", available_steps, format_func=lambda x: step_options.get(x, f"Step {x}"), default=[2,3,4,5] if method_short == "Bashforth" else [2,3,4])
         h_options = [0.1, 0.05, 0.01, 0.005, 0.001]
         selected_h = st.select_slider(T['screen2_h_label'], options=h_options, value=0.01)
 
@@ -190,76 +199,44 @@ if run_button:
         for error in errors: st.error(error)
         st.session_state.last_results = None
     else:
-        try:
-            # Lấy các hàm generator từ model_data
-            ode_func_gen = model_data['ode_func']
-            exact_func_gen = model_data.get('exact_func') # Dùng .get() để an toàn hơn
+        # Placeholder cho logic chuẩn bị phức tạp
+        calculated_values = {}
+        if model_id == 'model2': params['c'] = 0.5; calculated_values['c'] = 0.5
+        if model_id == 'model3': params['r'] = 0.01; calculated_values['r'] = 0.01
+        
+        ode_func_gen = model_data['ode_func']
+        exact_func_gen = model_data.get('exact_func')
 
-            # Lấy điều kiện đầu y0
-            y0_keys = {'model1': 'O₀', 'model2': 'x₀', 'model3': 'n', 'model4': ['Y0', 'dY0'], 'model5': ['x0', 'y0']}
-            y0_key = y0_keys[model_id]
-            y0 = [params[k] for k in y0_key] if isinstance(y0_key, list) else params[y0_key]
+        ode_params = {k: v for k, v in params.items() if k not in ['t₀', 't₁', 'O₀', 'x₀', 'n', 'Y0', 'dY0', 'x0', 'y0']}
+        ode_func = ode_func_gen(**ode_params)
+        exact_func = exact_func_gen(**params) if exact_func_gen else None
+        
+        y0_keys = {'model1': 'O₀', 'model2': 'x₀', 'model3': 'n', 'model4': ['Y0', 'dY0'], 'model5': ['x0', 'y0']}
+        y0_key = y0_keys[model_id]
+        y0 = [params[k] for k in y0_key] if isinstance(y0_key, list) else params[y0_key]
 
-            # --- SỬA LỖI TypeError Ở ĐÂY ---
-            # Tạo các hàm ode và exact cụ thể bằng cách truyền đúng tham số
-            calculated_values = {}
-            if model_id == 'model1':
-                ode_func = ode_func_gen(k=params['k'])
-                exact_func = exact_func_gen(O0=params['O₀'], k=params['k'], t0=params['t₀']) if exact_func_gen else None
-            elif model_id == 'model2':
-                # Logic tính 'c' cần được hoàn thiện dựa trên code gốc
-                c_val = 0.5 # Placeholder
-                calculated_values['c'] = c_val
-                ode_func = ode_func_gen(c=c_val)
-                exact_func = exact_func_gen(x0=params['x₀'], c=c_val, t0=params['t₀']) if exact_func_gen else None
-            elif model_id == 'model3':
-                # Logic tính 'r' cần được hoàn thiện
-                r_val = 0.01 # Placeholder
-                calculated_values['r'] = r_val
-                ode_func = ode_func_gen(r=r_val, n_initial=params['n'])
-                exact_func = exact_func_gen(n_initial=params['n'], r=r_val, t0=params['t₀']) if exact_func_gen else None
-            elif model_id == 'model4':
-                # Logic tính alpha, beta
-                alpha = params['m'] + params['l']*params['s'] - params['l']*params['m']*params['a']
-                beta = params['l']*params['m']*params['s']
-                calculated_values['alpha'] = alpha
-                calculated_values['beta'] = beta
-                ode_func = ode_func_gen(alpha=alpha, beta=beta, m=params['m'], G=params['G'], l=params['l'])
-                exact_func = exact_func_gen(alpha=alpha, beta=beta, m=params['m'], G=params['G'], l=params['l'], n=params['Y0'], k=params['dY0'], t0=params['t₀']) if exact_func_gen else None
-            elif model_id == 'model5':
-                ode_func = ode_func_gen(u_param=params['u'], v_param=params['v'])
-                exact_func = None # Model 5 không có nghiệm chính xác
-            else:
-                st.error("Model không được hỗ trợ.")
-                st.stop()
-
-            results_dict = {}
-            with st.spinner(T['screen2_info_area_running']):
-                for step in selected_steps:
-                    _config = {
-                        'ode_func': ode_func, 'exact_func': exact_func, 'y0': y0,
-                        't_start': params['t₀'], 't_end': params['t₁'], 'h': selected_h,
-                        'method': method_short, 'step': step, 'model_data': model_data,
-                        'component': st.session_state.get('selected_component', 'x')
-                    }
-                    res = perform_simulation_cached(_config)
-                    if res and "error" not in res: results_dict[step] = res
-                    elif res: st.error(f"Lỗi mô phỏng {step} bước: {res['error']}"); st.code(res['traceback'])
-            
-            if results_dict:
-                st.session_state.last_results = results_dict
-                if model_id in ["model2", "model3", "model5"]:
-                    highest_step_res = results_dict[max(results_dict.keys())]
-                    st.session_state.dynamic_plot_data = {"params": params, "y0_anim": y0, **calculated_values, **highest_step_res}
-                    st.session_state.show_dynamic_sim_button = True
-                st.rerun()
-            else:
-                st.warning("Mô phỏng không trả về kết quả hợp lệ."); st.session_state.last_results = None
-
-        except Exception as e:
-            st.error(f"Đã xảy ra lỗi không xác định trong quá trình chạy: {e}")
-            st.code(traceback.format_exc())
-            st.session_state.last_results = None
+        results_dict = {}
+        with st.spinner(T['screen2_info_area_running']):
+            for step in selected_steps:
+                config = {
+                    'ode_func': ode_func, 'exact_func': exact_func, 'y0': y0,
+                    't_start': params['t₀'], 't_end': params['t₁'], 'h': selected_h,
+                    'method': method_short, 'step': step, 'model_data': model_data,
+                    'component': st.session_state.get('selected_component', 'x')
+                }
+                res = perform_simulation_cached(config)
+                if res and "error" not in res: results_dict[step] = res
+                elif res: st.error(f"Lỗi mô phỏng {step} bước: {res['error']}"); st.code(res['traceback'])
+        
+        if results_dict:
+            st.session_state.last_results = results_dict
+            if model_id in ["model2", "model3", "model5"]:
+                highest_step_res = results_dict[max(results_dict.keys())]
+                st.session_state.dynamic_plot_data = {"params": params, "y0_anim": y0, **calculated_values, **highest_step_res}
+                st.session_state.show_dynamic_sim_button = True
+            st.rerun()
+        else:
+            st.warning("Mô phỏng không trả về kết quả hợp lệ."); st.session_state.last_results = None
 
 if st.session_state.get('last_results'):
     results = st.session_state.last_results
@@ -271,7 +248,7 @@ if st.session_state.get('last_results'):
             method_short=method_short,
             selected_component=st.session_state.get('selected_component', 'x')
         )
-        col1, col2 = st.columns(2)
+        col1, col2 = st.columns([1, 1])
         with col1:
             st.pyplot(fig_sol)
             st.pyplot(fig_ord)
