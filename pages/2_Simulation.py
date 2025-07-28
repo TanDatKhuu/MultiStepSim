@@ -1,9 +1,13 @@
+# -*- coding: utf-8 -*-
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 import traceback
 from datetime import datetime
-import os
 import io
 
 # Import các module đã được tách
