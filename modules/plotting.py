@@ -19,7 +19,7 @@ def create_results_figures(results_dict, T, model_data, method_short, selected_c
     # --- Khởi tạo ---
     fs = 8  # Font size
     n_steps = len(results_dict)
-    colors = plt.cm.jet(np.linspace(0, 1, max(1, n_steps)))
+    colors = colors = plt.cm.tab10.colors
     
     is_model5 = model_data.get("id") == "model5"
     
