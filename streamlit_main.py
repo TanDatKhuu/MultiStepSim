@@ -1,12 +1,12 @@
-# streamlit_main.py
 import streamlit as st
 from modules.translations import LANG_VI, LANG_EN
 import os
 import base64
 
+# --- HÀM THÊM ẢNH NỀN (ĐÃ CẬP NHẬT) ---
 def set_bg_hack(main_bg):
     '''
-    Hàm để chèn CSS tùy chỉnh cho ảnh nền.
+    Hàm để chèn CSS tùy chỉnh cho ảnh nền cố định.
     main_bg: Chuỗi base64 của ảnh.
     '''
     main_bg_ext = "png"
@@ -18,7 +18,7 @@ def set_bg_hack(main_bg):
             background: url(data:image/{main_bg_ext};base64,{main_bg});
             background-size: cover;
             background-repeat: no-repeat;
-            background-attachment: fixed;
+            background-attachment: fixed; /* <<< DÒNG NÀY SẼ GIỮ ẢNH NỀN CỐ ĐỊNH */
         }}
         </style>
         """,
@@ -33,10 +33,18 @@ def get_base64_of_bin_file(bin_file):
     return base64.b64encode(data).decode()
 
 # --- GỌI HÀM SET BACKGROUND Ở ĐẦU SCRIPT ---
-img_base64 = get_base64_of_bin_file("fig/back@2.png") # <--- THAY ĐỔI TÊN FILE NÀY
-set_bg_hack(img_base64)
+# Thay 'fig/back@2.png' bằng tên file ảnh nền chính xác của bạn
+try:
+    img_path = os.path.join("fig", "back@2.png")
+    img_base64 = get_base64_of_bin_file(img_path)
+    set_bg_hack(img_base64)
+except FileNotFoundError:
+    st.warning("Không tìm thấy file ảnh nền 'fig/back@2.png'. Bỏ qua việc đặt ảnh nền.")
 
-# Cấu hình trang (phải là lệnh đầu tiên)
+
+# --- PHẦN CODE CÒN LẠI GIỮ NGUYÊN ---
+
+# Cấu hình trang (phải là lệnh đầu tiên sau khi import và định nghĩa hàm)
 st.set_page_config(
     page_title="MultiStepSim",
     page_icon=os.path.join("fig", "icon-app.ico"),
@@ -44,7 +52,6 @@ st.set_page_config(
 )
 
 # Khởi tạo st.session_state để lưu trạng thái
-# Đây là bước cực kỳ quan trọng để ứng dụng có thể "nhớ" lựa chọn của người dùng
 if 'lang' not in st.session_state:
     st.session_state.lang = 'vi'
     st.session_state.translations = LANG_VI
@@ -52,13 +59,12 @@ if 'lang' not in st.session_state:
 def set_language(lang_code):
     st.session_state.lang = lang_code
     st.session_state.translations = LANG_EN if lang_code == 'en' else LANG_VI
-    st.rerun() # Yêu cầu Streamlit chạy lại toàn bộ script để cập nhật giao diện
+    st.rerun()
 
 # Lấy bản dịch hiện tại từ session_state
 T = st.session_state.translations
 
 # --- Giao diện ---
-# Sidebar để chọn ngôn ngữ
 with st.sidebar:
     st.header("Language / Ngôn ngữ")
     if st.button(T['lang_vi'], use_container_width=True):
@@ -67,6 +73,8 @@ with st.sidebar:
         set_language('en')
 
 # --- Nội dung chính của trang Welcome ---
+# (Phần này bạn có thể giữ nguyên hoặc bỏ đi nếu muốn trang chủ chỉ có ảnh nền)
+# Để giống ứng dụng gốc, ta sẽ giữ lại
 col1, col2, col3 = st.columns([1, 3, 1])
 with col1:
     st.image(os.path.join("fig", "logotdtu1.png"), width=150)
@@ -78,7 +86,6 @@ with col3:
 
 st.markdown("---")
 
-# Thay thế \n bằng <br> cho HTML
 welcome_title_html = T['welcome_project_title'].replace('\n', '<br>')
 st.markdown(f"<h1 style='text-align: center; color: #990000;'>{welcome_title_html}</h1>", unsafe_allow_html=True)
 
