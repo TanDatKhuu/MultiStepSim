@@ -41,17 +41,17 @@ def validate_and_get_params(model_data, T):
     return is_valid, params, errors
 
 @st.cache_data
-def perform_simulation_cached(config):
+def perform_simulation_cached(_config):
     try:
-        ode_func = config['ode_func']
-        exact_func = config['exact_func']
-        y0 = config['y0']
-        t_start, t_end = config['t_start'], config['t_end']
-        method_short = config['method']
-        steps_int = config['step']
-        h_target = config['h']
-        selected_component = config.get('component', 'x')
-        model_data = config['model_data']
+        ode_func = _config['ode_func']
+        exact_func = _config['exact_func']
+        y0 = _config['y0']
+        t_start, t_end = _config['t_start'], _config['t_end']
+        method_short = _config['method']
+        steps_int = _config['step']
+        h_target = _config['h']
+        selected_component = _config.get('component', 'x')
+        model_data = _config['model_data']
         
         is_system = model_data.get("is_system", False)
         uses_rk5_ref = model_data.get("uses_rk5_reference", False)
@@ -236,13 +236,13 @@ if run_button:
             results_dict = {}
             with st.spinner(T['screen2_info_area_running']):
                 for step in selected_steps:
-                    config = {
+                    _config = {
                         'ode_func': ode_func, 'exact_func': exact_func, 'y0': y0,
                         't_start': params['t₀'], 't_end': params['t₁'], 'h': selected_h,
                         'method': method_short, 'step': step, 'model_data': model_data,
                         'component': st.session_state.get('selected_component', 'x')
                     }
-                    res = perform_simulation_cached(config)
+                    res = perform_simulation_cached(_config)
                     if res and "error" not in res: results_dict[step] = res
                     elif res: st.error(f"Lỗi mô phỏng {step} bước: {res['error']}"); st.code(res['traceback'])
             
