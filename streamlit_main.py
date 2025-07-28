@@ -2,6 +2,39 @@
 import streamlit as st
 from modules.translations import LANG_VI, LANG_EN
 import os
+import base64
+
+def set_bg_hack(main_bg):
+    '''
+    Hàm để chèn CSS tùy chỉnh cho ảnh nền.
+    main_bg: Chuỗi base64 của ảnh.
+    '''
+    main_bg_ext = "png"
+        
+    st.markdown(
+        f"""
+        <style>
+        .stApp {{
+            background: url(data:image/{main_bg_ext};base64,{main_bg});
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+# --- HÀM ĐỂ LẤY CHUỖI BASE64 TỪ FILE ---
+@st.cache_data # Cache lại để không phải đọc file mỗi lần
+def get_base64_of_bin_file(bin_file):
+    with open(bin_file, 'rb') as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+# --- GỌI HÀM SET BACKGROUND Ở ĐẦU SCRIPT ---
+img_base64 = get_base64_of_bin_file("fig/back@2.png") # <--- THAY ĐỔI TÊN FILE NÀY
+set_bg_hack(img_base64)
 
 # Cấu hình trang (phải là lệnh đầu tiên)
 st.set_page_config(
