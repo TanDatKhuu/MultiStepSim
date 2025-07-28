@@ -185,18 +185,30 @@ if run_button:
         st.session_state.last_results = None
     else:
         try:
-            import inspect
             ode_func_gen = model_data['ode_func']
             exact_func_gen = model_data.get('exact_func')
-            ode_params_needed = inspect.signature(ode_func_gen).parameters.keys()
-            ode_params_to_pass = {k: params[k] for k in ode_params_needed if k in params}
+            
+            # --- SỬA LỖI TypeError BẰNG CÁCH DÙNG KEY ĐÃ ĐỊNH NGHĨA ---
+            calculated_values = {}
+            # Logic tính toán các giá trị phụ
+            if model_id == 'model2': params['c'] = 0.5; calculated_values['c'] = 0.5
+            if model_id == 'model3': params['r'] = 0.01; calculated_values['r'] = 0.01
+            if model_id == 'model4':
+                params['alpha'] = params['m'] + params['l']*params['s'] - params['l']*params['m']*params['a']
+                params['beta'] = params['l']*params['m']*params['s']
+                calculated_values['alpha'] = params['alpha']
+                calculated_values['beta'] = params['beta']
+
+            # Lọc các tham số cần thiết cho mỗi hàm dựa trên key đã định nghĩa trong models.py
+            ode_params_to_pass = {k: params[k] for k in model_data['ode_params']}
             ode_func = ode_func_gen(**ode_params_to_pass)
+
             exact_func = None
             if callable(exact_func_gen):
-                exact_params_needed = inspect.signature(exact_func_gen).parameters.keys()
-                exact_params_to_pass = {k: params[k] for k in exact_params_needed if k in params}
+                exact_params_to_pass = {k: params[k] for k in model_data['exact_params']}
                 exact_func = exact_func_gen(**exact_params_to_pass)
-            
+
+            # Lấy điều kiện đầu y0
             y0_keys = {'model1': 'O₀', 'model2': 'x₀', 'model3': 'n', 'model4': ['Y0', 'dY0'], 'model5': ['x0', 'y0']}
             y0_key = y0_keys[model_id]
             y0 = [params[k] for k in y0_key] if isinstance(y0_key, list) else params[y0_key]
@@ -204,16 +216,16 @@ if run_button:
             results_dict = {}
             with st.spinner(T['screen2_info_area_running']):
                 for step in selected_steps:
+                    # Chuyển đổi y0 sang tuple để có thể hash được
+                    y0_hashable = tuple(y0) if isinstance(y0, list) else y0
+                    params_hashable = tuple(sorted(params.items()))
+                    
                     res = perform_simulation_cached(
-                        params_tuple=tuple(params.items()),
-                        method_short=method_short,
-                        step=step,
-                        h=selected_h,
+                        params_tuple=params_hashable,
+                        method_short=method_short, step=step, h=selected_h,
                         component=st.session_state.get('selected_component', 'x'),
-                        _model_data=model_data,
-                        _ode_func=ode_func,
-                        _exact_func=exact_func,
-                        _y0=tuple(y0) if isinstance(y0, list) else y0
+                        _model_data=model_data, _ode_func=ode_func,
+                        _exact_func=exact_func, _y0=y0_hashable
                     )
                     if res and "error" not in res: results_dict[step] = res
                     elif res: st.error(f"Lỗi mô phỏng {step} bước: {res['error']}"); st.code(res['traceback'])
@@ -222,7 +234,7 @@ if run_button:
                 st.session_state.last_results = results_dict
                 if model_id in ["model2", "model3", "model5"]:
                     highest_step_res = results_dict[max(results_dict.keys())]
-                    st.session_state.dynamic_plot_data = {"params": params, "y0_anim": y0, **highest_step_res}
+                    st.session_state.dynamic_plot_data = {"params": params, "y0_anim": y0, **calculated_values, **highest_step_res}
                     st.session_state.show_dynamic_sim_button = True
                 st.rerun()
             else:
