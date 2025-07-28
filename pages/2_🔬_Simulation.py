@@ -173,8 +173,8 @@ with st.sidebar:
     method_suffix = 'ab' if selected_method == T['screen2_method_ab'] else 'am'
     method_short = "Bashforth" if method_suffix == 'ab' else "Moulton" 
 
-# Sử dụng suffix đó để lấy đúng key dịch
-with st.expander(T[f"screen2_details_group_{method_suffix}"], expanded=True):
+ # Sử dụng suffix đó để lấy đúng key dịch
+ with st.expander(T[f"screen2_details_group_{method_suffix}"], expanded=True):
         step_options = {2: T['screen2_step2'], 3: T['screen2_step3'], 4: T['screen2_step4'], 5: T['screen2_step5']}
         
         if model_id == "model5" and method_short == "Bashforth":
