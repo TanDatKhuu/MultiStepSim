@@ -1,3 +1,4 @@
+streamlit
 numpy
 matplotlib
-PySide6
+Pillow
