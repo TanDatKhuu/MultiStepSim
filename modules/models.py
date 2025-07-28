@@ -7,40 +7,43 @@ from .animations import (ABM_ROOM_DIMENSION_DEFAULT, ABM_PTRANS_MIN, ABM_PTRANS_
                          MAX_TOTAL_AGENTS_FOR_FULL_DISPLAY, SAMPLE_SIZE_FOR_LARGE_POPULATION)
 
 # ==============================================
-#           Models Data
+#           Models Data (RESTRUCTURED)
 # ==============================================
 MODELS_DATA = {
-    LANG_VI["model1_name"]: {
+    "model1": {
         "id": "model1",
+        "name_key": "model1_name", # Key để tra cứu tên đã dịch
         "equation_key": "model1_eq", "description_key": "model1_desc",
         "internal_param_keys": ["O₀", "k", "t₀", "t₁"],
-        "ode_params": ["k"], # << THÊM MỚI
-        "exact_params": ["O₀", "k", "t₀"], # << THÊM MỚI
+        "ode_params": ["k"],
+        "exact_params": ["O₀", "k", "t₀"],
         "ode_func": lambda k: (lambda t, y: k * y),
         "exact_func": lambda O₀, k, t₀: (lambda t: O₀ * np.exp(k * (np.asarray(t) - t₀))),
     },
-    LANG_VI["model2_name"]: {
+    "model2": {
         "id": "model2",
+        "name_key": "model2_name",
         "equation_key": "model2_eq", "description_key": "model2_desc",
         "internal_param_keys": ["x₀", "t₀", "t₁"],
-        "ode_params": ["c"], # << THÊM MỚI
-        "exact_params": ["x₀", "c", "t₀"], # << THÊM MỚI
+        "ode_params": ["c"],
+        "exact_params": ["x₀", "c", "t₀"],
         "ode_func": lambda c: (lambda t, y: c * (y**(2.0/3.0) + 1e-15)),
         "exact_func": lambda x₀, c, t₀: (lambda t: (x₀**(1.0/3.0) + c * (np.asarray(t) - t₀) / 3.0)**3),
     },
-    LANG_VI["model3_name"]: {
+    "model3": {
         "id": "model3", "can_run_abm_on_screen3": True,
+        "name_key": "model3_name",
         "equation_key": "model3_eq", "description_key": "model3_desc",
         "internal_param_keys": ["n", "t₀", "t₁"],
-        "ode_params": ["r", "n"], # << THÊM MỚI (đổi n_initial thành n cho nhất quán)
-        "exact_params": ["n", "r", "t₀"], # << THÊM MỚI (đổi n_initial thành n)
+        "ode_params": ["r", "n"],
+        "exact_params": ["n", "r", "t₀"],
         "ode_func": lambda r, n: (lambda t, y: -r * y * (n + 1.0 - y)),
         "exact_func": lambda n, r, t₀: (
             lambda t: (n * (n + 1.0) * np.exp(-r * (n + 1.0) * (np.asarray(t) - t₀))) /
                       (1.0 + n * np.exp(-r * (n + 1.0) * (np.asarray(t) - t₀))) if n > 0 else
             (lambda t: np.zeros_like(np.asarray(t)))
         ),
-        "abm_defaults": {
+        "abm_defaults": { # Giữ nguyên
             "initial_infected": 1, "room_dimension": ABM_ROOM_DIMENSION_DEFAULT,
             "r_to_ptrans_factor": 5000, "ptrans_min": ABM_PTRANS_MIN, "ptrans_max": ABM_PTRANS_MAX,
             "base_agent_speed": 0.04, "speed_scaling_factor": 0.5, "min_agent_speed": 0.02, "max_agent_speed": 0.20,
@@ -49,21 +52,23 @@ MODELS_DATA = {
             "display_max_total": MAX_TOTAL_AGENTS_FOR_FULL_DISPLAY, "display_sample_size": SAMPLE_SIZE_FOR_LARGE_POPULATION
         }
     },
-    LANG_VI["model4_name"]: {
+    "model4": {
         "id": "model4", "is_system": True,
+        "name_key": "model4_name",
         "equation_key": "model4_eq", "description_key": "model4_desc",
         "internal_param_keys": ["m", "l", "a", "s", "G", "Y0", "dY0", "t₀", "t₁"],
-        "ode_params": ["alpha", "beta", "m", "G", "l"], # << THÊM MỚI
-        "exact_params": ["alpha", "beta", "m", "G", "l", "Y0", "dY0", "t₀"], # << THÊM MỚI
+        "ode_params": ["alpha", "beta", "m", "G", "l"],
+        "exact_params": ["alpha", "beta", "m", "G", "l", "Y0", "dY0", "t₀"],
         "ode_func": lambda alpha, beta, m, G, l: (lambda t, u1, u2: np.array([u2, m * l * G - alpha * u2 - beta * u1])),
         "exact_func": lambda alpha, beta, m, G, l, Y0, dY0, t₀: (lambda t_arr: _model4_exact_solution(alpha, beta, m, G, l, Y0, dY0, t₀, t_arr)),
     },
-    LANG_VI["model5_name"]: {
+    "model5": {
         "id": "model5", "is_system": True, "uses_rk5_reference": True,
+        "name_key": "model5_name",
         "equation_key": "model5_eq", "description_key": "model5_desc",
         "internal_param_keys": ["x0", "y0", "u", "v", "t₀", "t₁"],
-        "ode_params": ["u", "v"], # << THÊM MỚI
-        "exact_params": [], # << THÊM MỚI (Không có)
+        "ode_params": ["u", "v"],
+        "exact_params": [],
         "ode_func": lambda u, v: (lambda t, x, y: _model5_ode_system(t, x, y, u, v)),
         "exact_func": None,
     },
